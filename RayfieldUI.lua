@@ -2399,9 +2399,6 @@ function RayfieldLibrary:CreateWindow(Settings)
              -- Calculate text bounds and adjust size
             local textBounds = Label.Title.TextBounds
             local padding = 10 -- Add some padding
-            
-            -- Adjust label height based on text content
-            Label.Size = UDim2.new(1, -10, 0, textBounds.Y + padding * 2)
 
 			Label.BackgroundColor3 = Color or SelectedTheme.SecondaryElementBackground
 			Label.UIStroke.Color = Color or SelectedTheme.SecondaryElementStroke
