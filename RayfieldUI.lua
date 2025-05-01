@@ -674,7 +674,7 @@ elseif not useStudio then
 end
 
 
-local minSize = Vector2.new(1024, 768)
+local minSize = Vector2.new(500, 200)
 local useMobileSizing
 
 if Rayfield.AbsoluteSize.X < minSize.X and Rayfield.AbsoluteSize.Y < minSize.Y then
