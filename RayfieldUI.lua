@@ -1024,11 +1024,6 @@ function RayfieldLibrary:Notify(data) -- action e.g open messages
 
 		newNotification.Visible = true
 
-		if data.Actions then
-			warn('Rayfield | Not seeing your actions in notifications?')
-			print("Notification Actions are being sunset for now, keep up to date on when they're back in the discord. (sirius.menu/discord)")
-		end
-
 		-- Calculate textbounds and set initial values
 		local bounds = {newNotification.Title.TextBounds.Y, newNotification.Description.TextBounds.Y}
 		newNotification.Size = UDim2.new(1, -60, 0, -Notifications:FindFirstChild("UIListLayout").Padding.Offset)
