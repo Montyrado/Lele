@@ -2387,7 +2387,7 @@ function RayfieldLibrary:CreateWindow(Settings)
 			return DividerValue
 		end
 
-		-- Label with dynamic height based on text content
+		-- Label with simplified dynamic height adjustment
         function Tab:CreateLabel(LabelText : string, Icon: number, Color : Color3, IgnoreTheme : boolean)
             local LabelValue = {}
 
@@ -2399,7 +2399,6 @@ function RayfieldLibrary:CreateWindow(Settings)
             Label.BackgroundColor3 = Color or SelectedTheme.SecondaryElementBackground
             Label.UIStroke.Color = Color or SelectedTheme.SecondaryElementStroke
 
-            -- Configure icon if provided
             if Icon then
                 if typeof(Icon) == 'string' and Icons then
                     local asset = getIcon(Icon)
@@ -2415,11 +2414,9 @@ function RayfieldLibrary:CreateWindow(Settings)
             end
 
             if Icon and Label:FindFirstChild('Icon') then
-                Label.Title.Position = UDim2.new(0, 45, 0, 0) -- Change Y position to top for proper text wrapping
-                Label.Title.Size = UDim2.new(1, -100, 0, 0) -- Allow height to auto-adjust
-                Label.Title.TextWrapped = true -- Enable text wrapping
-                Label.Title.TextYAlignment = Enum.TextYAlignment.Top -- Align to top for better multi-line display
-                
+                Label.Title.Position = UDim2.new(0, 45, 0.5, 0)
+                Label.Title.Size = UDim2.new(1, -100, 0, 14)
+
                 if Icon then
                     if typeof(Icon) == 'string' and Icons then
                         local asset = getIcon(Icon)
@@ -2435,45 +2432,28 @@ function RayfieldLibrary:CreateWindow(Settings)
                 end
 
                 Label.Icon.Visible = true
-            else
-                -- If no icon, position text properly for wrapping
-                Label.Title.Position = UDim2.new(0, 10, 0, 0)
-                Label.Title.Size = UDim2.new(1, -20, 0, 0)
-                Label.Title.TextWrapped = true
-                Label.Title.TextYAlignment = Enum.TextYAlignment.Top
             end
 
-            -- Set initial transparency for animation
+            -- Enable text wrapping for multi-line support
+            Label.Title.TextWrapped = true
+            
+            -- Update label size based on text content
+            local textSize = game:GetService("TextService"):GetTextSize(
+                LabelText,
+                Label.Title.TextSize,
+                Label.Title.Font,
+                Vector2.new(Label.Title.AbsoluteSize.X, 10000)
+            )
+            
+            -- Set the label height based on text size with some padding
+            local padding = 16
+            Label.Size = UDim2.new(1, -10, 0, textSize.Y + padding)
+
             Label.Icon.ImageTransparency = 1
             Label.BackgroundTransparency = 1
             Label.UIStroke.Transparency = 1
             Label.Title.TextTransparency = 1
 
-            -- Function to update label size based on text content
-            local function updateLabelSize()
-                -- Wait a frame for TextBounds to update
-                task.defer(function()
-                    local textBounds = Label.Title.TextBounds
-                    local padding = 10 -- Padding around text
-                    local iconOffset = Icon and 20 or 0 -- Extra height if icon is present
-                    local minHeight = Icon and 40 or 30 -- Minimum height to maintain
-                    
-                    -- Update the label size with animation
-                    TweenService:Create(Label, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), {
-                        Size = UDim2.new(1, -10, 0, newHeight)
-                    }):Play()
-                    
-                    -- Position icon in center if present
-                    if Icon and Label:FindFirstChild('Icon') then
-                        Label.Icon.Position = UDim2.new(0, 20, 0, newHeight/2 - 16) -- Center icon vertically
-                    end
-                end)
-            end
-
-            -- Update size initially
-            updateLabelSize()
-
-            -- Animate elements
             TweenService:Create(Label, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {BackgroundTransparency = Color and 0.8 or 0}):Play()
             TweenService:Create(Label.UIStroke, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {Transparency = Color and 0.7 or 0}):Play()
             TweenService:Create(Label.Icon, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {ImageTransparency = 0.2}):Play()
@@ -2488,8 +2468,8 @@ function RayfieldLibrary:CreateWindow(Settings)
                 end
 
                 if Icon and Label:FindFirstChild('Icon') then
-                    Label.Title.Position = UDim2.new(0, 45, 0, 0)
-                    Label.Title.Size = UDim2.new(1, -100, 0, 0)
+                    Label.Title.Position = UDim2.new(0, 45, 0.5, 0)
+                    Label.Title.Size = UDim2.new(1, -100, 0, 14)
 
                     if Icon then
                         if typeof(Icon) == 'string' and Icons then
@@ -2509,18 +2489,22 @@ function RayfieldLibrary:CreateWindow(Settings)
                 end
                 
                 -- Update size when text changes
-                updateLabelSize()
+                local textSize = game:GetService("TextService"):GetTextSize(
+                    NewLabel,
+                    Label.Title.TextSize,
+                    Label.Title.Font,
+                    Vector2.new(Label.Title.AbsoluteSize.X, 10000)
+                )
+                
+                -- Set the label height based on text size with some padding
+                local padding = 16
+                Label.Size = UDim2.new(1, -10, 0, textSize.Y + padding)
             end
 
-            -- Listen for theme changes
             Rayfield.Main:GetPropertyChangedSignal('BackgroundColor3'):Connect(function()
                 Label.BackgroundColor3 = IgnoreTheme and (Color or Label.BackgroundColor3) or SelectedTheme.SecondaryElementBackground
                 Label.UIStroke.Color = IgnoreTheme and (Color or Label.BackgroundColor3) or SelectedTheme.SecondaryElementStroke
             end)
-
-            -- Listen for text changes to update size
-            Label.Title:GetPropertyChangedSignal('Text'):Connect(updateLabelSize)
-            Label.Title:GetPropertyChangedSignal('TextBounds'):Connect(updateLabelSize)
 
             return LabelValue
         end
