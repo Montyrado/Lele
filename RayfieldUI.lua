@@ -2387,127 +2387,100 @@ function RayfieldLibrary:CreateWindow(Settings)
 			return DividerValue
 		end
 
-		-- Label with simplified dynamic height adjustment
-        function Tab:CreateLabel(LabelText : string, Icon: number, Color : Color3, IgnoreTheme : boolean)
-            local LabelValue = {}
+		-- Label
+		function Tab:CreateLabel(LabelText : string, Icon: number, Color : Color3, IgnoreTheme : boolean)
+			local LabelValue = {}
 
-            local Label = Elements.Template.Label:Clone()
-            Label.Title.Text = LabelText
-            Label.Visible = true
-            Label.Parent = TabPage
+			local Label = Elements.Template.Label:Clone()
+			Label.Title.Text = LabelText
+			Label.Visible = true
+			Label.Parent = TabPage
 
-            Label.BackgroundColor3 = Color or SelectedTheme.SecondaryElementBackground
-            Label.UIStroke.Color = Color or SelectedTheme.SecondaryElementStroke
+			Label.BackgroundColor3 = Color or SelectedTheme.SecondaryElementBackground
+			Label.UIStroke.Color = Color or SelectedTheme.SecondaryElementStroke
 
-            if Icon then
-                if typeof(Icon) == 'string' and Icons then
-                    local asset = getIcon(Icon)
+			if Icon then
+				if typeof(Icon) == 'string' and Icons then
+					local asset = getIcon(Icon)
 
-                    Label.Icon.Image = 'rbxassetid://'..asset.id
-                    Label.Icon.ImageRectOffset = asset.imageRectOffset
-                    Label.Icon.ImageRectSize = asset.imageRectSize
-                else
-                    Label.Icon.Image = getAssetUri(Icon)
-                end
-            else
-                Label.Icon.Image = "rbxassetid://" .. 0
-            end
+					Label.Icon.Image = 'rbxassetid://'..asset.id
+					Label.Icon.ImageRectOffset = asset.imageRectOffset
+					Label.Icon.ImageRectSize = asset.imageRectSize
+				else
+					Label.Icon.Image = getAssetUri(Icon)
+				end
+			else
+				Label.Icon.Image = "rbxassetid://" .. 0
+			end
 
-            if Icon and Label:FindFirstChild('Icon') then
-                Label.Title.Position = UDim2.new(0, 45, 0.5, 0)
-                Label.Title.Size = UDim2.new(1, -100, 0, 14)
+			if Icon and Label:FindFirstChild('Icon') then
+				Label.Title.Position = UDim2.new(0, 45, 0.5, 0)
+				Label.Title.Size = UDim2.new(1, -100, 0, 14)
 
-                if Icon then
-                    if typeof(Icon) == 'string' and Icons then
-                        local asset = getIcon(Icon)
+				if Icon then
+					if typeof(Icon) == 'string' and Icons then
+						local asset = getIcon(Icon)
 
-                        Label.Icon.Image = 'rbxassetid://'..asset.id
-                        Label.Icon.ImageRectOffset = asset.imageRectOffset
-                        Label.Icon.ImageRectSize = asset.imageRectSize
-                    else
-                        Label.Icon.Image = getAssetUri(Icon)
-                    end
-                else
-                    Label.Icon.Image = "rbxassetid://" .. 0
-                end
+						Label.Icon.Image = 'rbxassetid://'..asset.id
+						Label.Icon.ImageRectOffset = asset.imageRectOffset
+						Label.Icon.ImageRectSize = asset.imageRectSize
+					else
+						Label.Icon.Image = getAssetUri(Icon)
+					end
+				else
+					Label.Icon.Image = "rbxassetid://" .. 0
+				end
 
-                Label.Icon.Visible = true
-            end
+				Label.Icon.Visible = true
+			end
 
-            -- Enable text wrapping for multi-line support
-            Label.Title.TextWrapped = true
-            
-            -- Update label size based on text content
-            local textSize = game:GetService("TextService"):GetTextSize(
-                LabelText,
-                Label.Title.TextSize,
-                Label.Title.Font,
-                Vector2.new(Label.Title.AbsoluteSize.X, 10000)
-            )
-            
-            -- Set the label height based on text size with some padding
-            local padding = 16
-            Label.Size = UDim2.new(1, -10, 0, textSize.Y + padding)
+			Label.Icon.ImageTransparency = 1
+			Label.BackgroundTransparency = 1
+			Label.UIStroke.Transparency = 1
+			Label.Title.TextTransparency = 1
 
-            Label.Icon.ImageTransparency = 1
-            Label.BackgroundTransparency = 1
-            Label.UIStroke.Transparency = 1
-            Label.Title.TextTransparency = 1
+			TweenService:Create(Label, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {BackgroundTransparency = Color and 0.8 or 0}):Play()
+			TweenService:Create(Label.UIStroke, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {Transparency = Color and 0.7 or 0}):Play()
+			TweenService:Create(Label.Icon, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {ImageTransparency = 0.2}):Play()
+			TweenService:Create(Label.Title, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {TextTransparency = Color and 0.2 or 0}):Play()	
 
-            TweenService:Create(Label, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {BackgroundTransparency = Color and 0.8 or 0}):Play()
-            TweenService:Create(Label.UIStroke, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {Transparency = Color and 0.7 or 0}):Play()
-            TweenService:Create(Label.Icon, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {ImageTransparency = 0.2}):Play()
-            TweenService:Create(Label.Title, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {TextTransparency = Color and 0.2 or 0}):Play()    
+			function LabelValue:Set(NewLabel, Icon, Color)
+				Label.Title.Text = NewLabel
 
-            function LabelValue:Set(NewLabel, Icon, Color)
-                Label.Title.Text = NewLabel
+				if Color then
+					Label.BackgroundColor3 = Color or SelectedTheme.SecondaryElementBackground
+					Label.UIStroke.Color = Color or SelectedTheme.SecondaryElementStroke
+				end
 
-                if Color then
-                    Label.BackgroundColor3 = Color or SelectedTheme.SecondaryElementBackground
-                    Label.UIStroke.Color = Color or SelectedTheme.SecondaryElementStroke
-                end
+				if Icon and Label:FindFirstChild('Icon') then
+					Label.Title.Position = UDim2.new(0, 45, 0.5, 0)
+					Label.Title.Size = UDim2.new(1, -100, 0, 14)
 
-                if Icon and Label:FindFirstChild('Icon') then
-                    Label.Title.Position = UDim2.new(0, 45, 0.5, 0)
-                    Label.Title.Size = UDim2.new(1, -100, 0, 14)
+					if Icon then
+						if typeof(Icon) == 'string' and Icons then
+							local asset = getIcon(Icon)
 
-                    if Icon then
-                        if typeof(Icon) == 'string' and Icons then
-                            local asset = getIcon(Icon)
+							Label.Icon.Image = 'rbxassetid://'..asset.id
+							Label.Icon.ImageRectOffset = asset.imageRectOffset
+							Label.Icon.ImageRectSize = asset.imageRectSize
+						else
+							Label.Icon.Image = getAssetUri(Icon)
+						end
+					else
+						Label.Icon.Image = "rbxassetid://" .. 0
+					end
 
-                            Label.Icon.Image = 'rbxassetid://'..asset.id
-                            Label.Icon.ImageRectOffset = asset.imageRectOffset
-                            Label.Icon.ImageRectSize = asset.imageRectSize
-                        else
-                            Label.Icon.Image = getAssetUri(Icon)
-                        end
-                    else
-                        Label.Icon.Image = "rbxassetid://" .. 0
-                    end
+					Label.Icon.Visible = true
+				end
+			end
 
-                    Label.Icon.Visible = true
-                end
-                
-                -- Update size when text changes
-                local textSize = game:GetService("TextService"):GetTextSize(
-                    NewLabel,
-                    Label.Title.TextSize,
-                    Label.Title.Font,
-                    Vector2.new(Label.Title.AbsoluteSize.X, 10000)
-                )
-                
-                -- Set the label height based on text size with some padding
-                local padding = 16
-                Label.Size = UDim2.new(1, -10, 0, textSize.Y + padding)
-            end
+			Rayfield.Main:GetPropertyChangedSignal('BackgroundColor3'):Connect(function()
+				Label.BackgroundColor3 = IgnoreTheme and (Color or Label.BackgroundColor3) or SelectedTheme.SecondaryElementBackground
+				Label.UIStroke.Color = IgnoreTheme and (Color or Label.BackgroundColor3) or SelectedTheme.SecondaryElementStroke
+			end)
 
-            Rayfield.Main:GetPropertyChangedSignal('BackgroundColor3'):Connect(function()
-                Label.BackgroundColor3 = IgnoreTheme and (Color or Label.BackgroundColor3) or SelectedTheme.SecondaryElementBackground
-                Label.UIStroke.Color = IgnoreTheme and (Color or Label.BackgroundColor3) or SelectedTheme.SecondaryElementStroke
-            end)
-
-            return LabelValue
-        end
+			return LabelValue
+		end
 
 		-- Paragraph
 		function Tab:CreateParagraph(ParagraphSettings)
