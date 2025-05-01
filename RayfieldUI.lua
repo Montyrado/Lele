@@ -2458,9 +2458,6 @@ function RayfieldLibrary:CreateWindow(Settings)
                     local iconOffset = Icon and 20 or 0 -- Extra height if icon is present
                     local minHeight = Icon and 40 or 30 -- Minimum height to maintain
                     
-                    -- Calculate new height based on text bounds
-                    local newHeight = math.max(textBounds.Y + padding * 2, minHeight)
-                    
                     -- Update the label size with animation
                     TweenService:Create(Label, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), {
                         Size = UDim2.new(1, -10, 0, newHeight)
