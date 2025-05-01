@@ -2415,7 +2415,7 @@ function RayfieldLibrary:CreateWindow(Settings)
 
 			if Icon and Label:FindFirstChild('Icon') then
 				Label.Title.Position = UDim2.new(0, 45, 0.5, 0)
-				Label.Title.Size = UDim2.new(1, -100, 0, 14)
+				Label.Title.Size = UDim2.new(1, 100, 0, 14)
 
 				if Icon then
 					if typeof(Icon) == 'string' and Icons then
