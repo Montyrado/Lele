@@ -74,6 +74,30 @@ local Release = "Build 1.672"
 local RayfieldFolder = "Rayfield"
 local ConfigurationFolder = RayfieldFolder.."/Configurations"
 local ConfigurationExtension = ".rfld"
+-- Add this function to get player-specific configuration path
+local function GetPlayerConfigPath()
+    local playerName = ""
+    
+    -- Try to get player UserId for unique identification
+    local success, result = pcall(function()
+        return game.Players.LocalPlayer.UserId
+    end)
+    
+    if success and result then
+        playerName = tostring(result)
+    else
+        -- Fallback to player name if UserId isn't available
+        success, result = pcall(function()
+            return game.Players.LocalPlayer.Name
+        end)
+        if success and result then
+            playerName = result
+        end
+    end
+    
+    -- Return player-specific folder path
+    return ConfigurationFolder .. "/" .. playerName
+end
 local settingsTable = {
 	General = {
 		-- if needs be in order just make getSetting(name)
@@ -927,52 +951,59 @@ local function LoadConfiguration(Configuration)
 end
 
 local function SaveConfiguration()
-	if not CEnabled or not globalLoaded then return end
+    if not CEnabled or not globalLoaded then return end
 
-	if debugX then
-		print('Saving')
-	end
+    if debugX then
+        print('Saving')
+    end
 
-	local Data = {}
-	for i, v in pairs(RayfieldLibrary.Flags) do
-		if v.Type == "ColorPicker" then
-			Data[i] = PackColor(v.Color)
-		else
-			if typeof(v.CurrentValue) == 'boolean' then
-				if v.CurrentValue == false then
-					Data[i] = false
-				else
-					Data[i] = v.CurrentValue or v.CurrentKeybind or v.CurrentOption or v.Color
-				end
-			else
-				Data[i] = v.CurrentValue or v.CurrentKeybind or v.CurrentOption or v.Color
-			end
-		end
-	end
+    local Data = {}
+    for i, v in pairs(RayfieldLibrary.Flags) do
+        if v.Type == "ColorPicker" then
+            Data[i] = PackColor(v.Color)
+        else
+            if typeof(v.CurrentValue) == 'boolean' then
+                if v.CurrentValue == false then
+                    Data[i] = false
+                else
+                    Data[i] = v.CurrentValue or v.CurrentKeybind or v.CurrentOption or v.Color
+                end
+            else
+                Data[i] = v.CurrentValue or v.CurrentKeybind or v.CurrentOption or v.Color
+            end
+        end
+    end
 
-	if useStudio then
-		if script.Parent:FindFirstChild('configuration') then script.Parent.configuration:Destroy() end
+    if useStudio then
+        if script.Parent:FindFirstChild('configuration') then script.Parent.configuration:Destroy() end
 
-		local ScreenGui = Instance.new("ScreenGui")
-		ScreenGui.Parent = script.Parent
-		ScreenGui.Name = 'configuration'
+        local ScreenGui = Instance.new("ScreenGui")
+        ScreenGui.Parent = script.Parent
+        ScreenGui.Name = 'configuration'
 
-		local TextBox = Instance.new("TextBox")
-		TextBox.Parent = ScreenGui
-		TextBox.Size = UDim2.new(0, 800, 0, 50)
-		TextBox.AnchorPoint = Vector2.new(0.5, 0)
-		TextBox.Position = UDim2.new(0.5, 0, 0, 30)
-		TextBox.Text = HttpService:JSONEncode(Data)
-		TextBox.ClearTextOnFocus = false
-	end
+        local TextBox = Instance.new("TextBox")
+        TextBox.Parent = ScreenGui
+        TextBox.Size = UDim2.new(0, 800, 0, 50)
+        TextBox.AnchorPoint = Vector2.new(0.5, 0)
+        TextBox.Position = UDim2.new(0.5, 0, 0, 30)
+        TextBox.Text = HttpService:JSONEncode(Data)
+        TextBox.ClearTextOnFocus = false
+    end
 
-	if debugX then
-		warn(HttpService:JSONEncode(Data))
-	end
+    if debugX then
+        warn(HttpService:JSONEncode(Data))
+    end
 
-	if writefile then
-		writefile(ConfigurationFolder .. "/" .. CFileName .. ConfigurationExtension, tostring(HttpService:JSONEncode(Data)))
-	end
+    if writefile then
+        -- Create player-specific folder if it doesn't exist
+        local playerConfigPath = GetPlayerConfigPath()
+        if not isfolder(playerConfigPath) and isfolder then
+            makefolder(playerConfigPath)
+        end
+        
+        -- Save to player-specific configuration file
+        writefile(playerConfigPath .. "/" .. CFileName .. ConfigurationExtension, tostring(HttpService:JSONEncode(Data)))
+    end
 end
 
 function RayfieldLibrary:Notify(data) -- action e.g open messages
@@ -3637,45 +3668,48 @@ end
 
 
 function RayfieldLibrary:LoadConfiguration()
-	local config
+    local config
 
-	if debugX then
-		warn('Loading Configuration')
-	end
+    if debugX then
+        warn('Loading Configuration')
+    end
 
-	if useStudio then
-		config = [[{"Toggle1adwawd":true,"ColorPicker1awd":{"B":255,"G":255,"R":255},"Slider1dawd":100,"ColorPicfsefker1":{"B":255,"G":255,"R":255},"Slidefefsr1":80,"dawdawd":"","Input1":"hh","Keybind1":"B","Dropdown1":["Ocean"]}]]
-	end
+    if useStudio then
+        config = [[{"Toggle1adwawd":true,"ColorPicker1awd":{"B":255,"G":255,"R":255},"Slider1dawd":100,"ColorPicfsefker1":{"B":255,"G":255,"R":255},"Slidefefsr1":80,"dawdawd":"","Input1":"hh","Keybind1":"B","Dropdown1":["Ocean"]}]]
+    end
 
-	if CEnabled then
-		local notified
-		local loaded
+    if CEnabled then
+        local notified
+        local loaded
 
-		local success, result = pcall(function()
-			if useStudio and config then
-				loaded = LoadConfiguration(config)
-				return
-			end
+        local success, result = pcall(function()
+            if useStudio and config then
+                loaded = LoadConfiguration(config)
+                return
+            end
 
-			if isfile then 
-				if isfile(ConfigurationFolder .. "/" .. CFileName .. ConfigurationExtension) then
-					loaded = LoadConfiguration(readfile(ConfigurationFolder .. "/" .. CFileName .. ConfigurationExtension))
-				end
-			else
-				notified = true
-				RayfieldLibrary:Notify({Title = "Rayfield Configurations", Content = "We couldn't enable Configuration Saving as you are not using software with filesystem support.", Image = 4384402990})
-			end
-		end)
+            if isfile then
+                local playerConfigPath = GetPlayerConfigPath()
+                local configFilePath = playerConfigPath .. "/" .. CFileName .. ConfigurationExtension
+                
+                if isfile(configFilePath) then
+                    loaded = LoadConfiguration(readfile(configFilePath))
+                end
+            else
+                notified = true
+                RayfieldLibrary:Notify({Title = "Rayfield Configurations", Content = "We couldn't enable Configuration Saving as you are not using software with filesystem support.", Image = 4384402990})
+            end
+        end)
 
-		if success and loaded and not notified then
-			RayfieldLibrary:Notify({Title = "Rayfield Configurations", Content = "The configuration file for this script has been loaded from a previous session.", Image = 4384403532})
-		elseif not success and not notified then
-			warn('Rayfield Configurations Error | '..tostring(result))
-			RayfieldLibrary:Notify({Title = "Rayfield Configurations", Content = "We've encountered an issue loading your configuration correctly.\n\nCheck the Developer Console for more information.", Image = 4384402990})
-		end
-	end
+        if success and loaded and not notified then
+            RayfieldLibrary:Notify({Title = "Rayfield Configurations", Content = "The configuration file for this script has been loaded from a previous session.", Image = 4384403532})
+        elseif not success and not notified then
+            warn('Rayfield Configurations Error | '..tostring(result))
+            RayfieldLibrary:Notify({Title = "Rayfield Configurations", Content = "We've encountered an issue loading your configuration correctly.\n\nCheck the Developer Console for more information.", Image = 4384402990})
+        end
+    end
 
-	globalLoaded = true
+    globalLoaded = true
 end
 
 
