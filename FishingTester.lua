@@ -242,12 +242,12 @@ end
 
 -- Create Window
 local Window = Rayfield:CreateWindow({
-    Name = "Fishing Implementation Tester",
-    LoadingTitle = "Loading Tester...",
-    LoadingSubtitle = "by Montrado",
+    Name = "Test Window",
+    LoadingTitle = "Loading...",
+    LoadingSubtitle = "Test",
     ConfigurationSaving = {
         Enabled = true,
-        FolderName = "FishingTester",
+        FolderName = "Test",
         FileName = "Config"
     }
 })
@@ -397,7 +397,7 @@ end)
 
 -- Notify on load
 Rayfield:Notify({
-    Title = "Fishing Implementation Tester",
-    Content = "Successfully loaded! Select an implementation to begin testing.",
+    Title = "Test",
+    Content = "If you see this, Rayfield is working!",
     Duration = 3.5,
 }) 
