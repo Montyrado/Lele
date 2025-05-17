@@ -2678,7 +2678,7 @@ function RayfieldLibrary:CreateWindow(Settings)
 				OptionButton.Title.TextColor3 = SelectedTheme.TextColor
 
 				-- Handle option selection
-				OptionButton.MouseButton1Click:Connect(function()
+				OptionButton.Interact.MouseButton1Click:Connect(function()
 					if isMainOption and DropdownSettings.Nested then
 						-- Handle nested dropdown visibility
 						for _, nestedSetting in ipairs(DropdownSettings.Nested) do
@@ -2708,7 +2708,7 @@ function RayfieldLibrary:CreateWindow(Settings)
 										NestedButton.BackgroundColor3 = table.find(nestedSetting.CurrentOption, nestedOption) and SelectedTheme.DropdownSelected or SelectedTheme.DropdownUnselected
 										NestedButton.Title.TextColor3 = SelectedTheme.TextColor
 
-										NestedButton.MouseButton1Click:Connect(function()
+										NestedButton.Interact.MouseButton1Click:Connect(function()
 											local isSelected = table.find(nestedSetting.CurrentOption, nestedOption)
 											if isSelected then
 												table.remove(nestedSetting.CurrentOption, table.find(nestedSetting.CurrentOption, nestedOption))
@@ -3767,7 +3767,7 @@ if useStudio then
 
 	local Label2 = Tab:CreateLabel("Warning", 4483362458, Color3.fromRGB(255, 159, 49),  true)
 
-	local Paragraph = Tab:CreateParagraph({Title = "Paragraph Example", Content = "Paragraph ExampleParagraph ExampleParagraph ExampleParagraph ExampleParagraph ExampleParagraph ExampleParagraph ExampleParagraph ExampleParagraph ExampleParagraph ExampleParagraph ExampleParagraph ExampleParagraph ExampleParagraph Example"})
+	local Paragraph = Tab:CreateParagraph({Title = "Paragraph Example", Content = "Paragraph ExampleParagraph ExampleParagraph ExampleParagraph ExampleParagraph ExampleParagraph ExampleParagraph ExampleParagraph ExampleParagraph ExampleParagraph ExampleParagraph ExampleParagraph ExampleParagraph Example"})
 end
 
 if CEnabled and Main:FindFirstChild('Notice') then
