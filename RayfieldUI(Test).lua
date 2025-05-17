@@ -2651,26 +2651,19 @@ function RayfieldLibrary:CreateWindow(Settings)
 			Dropdown.Visible = true
 			Dropdown.Parent = TabPage
 
+			-- Initialize dropdown state
 			Dropdown.List.Visible = false
-			if DropdownSettings.CurrentOption then
-				if type(DropdownSettings.CurrentOption) == "string" then
-					DropdownSettings.CurrentOption = {DropdownSettings.CurrentOption}
-				end
-				if not DropdownSettings.MultipleOptions and type(DropdownSettings.CurrentOption) == "table" then
-					DropdownSettings.CurrentOption = {DropdownSettings.CurrentOption[1]}
-				end
-			else
+			if type(DropdownSettings.CurrentOption) == "string" then
+				DropdownSettings.CurrentOption = {DropdownSettings.CurrentOption}
+			end
+			if not DropdownSettings.CurrentOption then
 				DropdownSettings.CurrentOption = {}
 			end
 
 			-- Setup main dropdown appearance
-			Dropdown.Selected.Text = DropdownSettings.CurrentOption[1] or "None"
+			Dropdown.Selected.Text = #DropdownSettings.CurrentOption > 0 and table.concat(DropdownSettings.CurrentOption, ", ") or "None"
 			Dropdown.Toggle.ImageColor3 = SelectedTheme.TextColor
 			TweenService:Create(Dropdown, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {BackgroundColor3 = SelectedTheme.ElementBackground}):Play()
-
-			Dropdown.BackgroundTransparency = 1
-			Dropdown.UIStroke.Transparency = 1
-			Dropdown.Title.TextTransparency = 1
 
 			-- Function to create option buttons
 			local function CreateOptionButton(option, parent, isMainOption)
@@ -2679,14 +2672,9 @@ function RayfieldLibrary:CreateWindow(Settings)
 				OptionButton.Text = option
 				OptionButton.Parent = parent
 				OptionButton.Visible = true
+				OptionButton.BackgroundColor3 = table.find(DropdownSettings.CurrentOption, option) and SelectedTheme.DropdownSelected or SelectedTheme.DropdownUnselected
+				OptionButton.TextColor3 = SelectedTheme.TextColor
 				
-				-- Set initial appearance
-				if table.find(DropdownSettings.CurrentOption, option) then
-					OptionButton.BackgroundColor3 = SelectedTheme.DropdownSelected
-				else
-					OptionButton.BackgroundColor3 = SelectedTheme.DropdownUnselected
-				end
-
 				-- Handle option selection
 				OptionButton.MouseButton1Click:Connect(function()
 					if isMainOption and DropdownSettings.Nested then
@@ -2703,6 +2691,8 @@ function RayfieldLibrary:CreateWindow(Settings)
 									NestedDropdown.Size = UDim2.new(1, -10, 0, 45)
 									NestedDropdown.Visible = true
 									NestedDropdown.List.Visible = true
+									NestedDropdown.BackgroundColor3 = SelectedTheme.ElementBackground
+									NestedDropdown.TextColor3 = SelectedTheme.TextColor
 
 									-- Create nested options
 									for _, nestedOption in ipairs(nestedSetting.Options) do
