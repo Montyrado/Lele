@@ -2672,57 +2672,89 @@ function RayfieldLibrary:CreateWindow(Settings)
 			Dropdown.UIStroke.Transparency = 1
 			Dropdown.Title.TextTransparency = 1
 
-			-- Create option buttons for main dropdown
-			local function CreateOptionButton(option, parent, isNested)
+			-- Function to create option buttons
+			local function CreateOptionButton(option, parent, isMainOption)
 				local OptionButton = Elements.Template.Dropdown.List.Template:Clone()
 				OptionButton.Name = option
-				OptionButton.Title.Text = option
+				OptionButton.Text = option
 				OptionButton.Parent = parent
 				OptionButton.Visible = true
-				OptionButton.LayoutOrder = #parent:GetChildren()
 				
-				OptionButton.BackgroundTransparency = 1
-				OptionButton.UIStroke.Transparency = 1
-				OptionButton.Title.TextTransparency = 1
+				-- Set initial appearance
+				if table.find(DropdownSettings.CurrentOption, option) then
+					OptionButton.BackgroundColor3 = SelectedTheme.DropdownSelected
+				else
+					OptionButton.BackgroundColor3 = SelectedTheme.DropdownUnselected
+				end
 
-				if isNested then
-					-- Create nested dropdown when main option is clicked
-					OptionButton.Interact.MouseButton1Click:Connect(function()
-						-- Find corresponding nested settings
+				-- Handle option selection
+				OptionButton.MouseButton1Click:Connect(function()
+					if isMainOption and DropdownSettings.Nested then
+						-- Handle nested dropdown visibility
 						for _, nestedSetting in ipairs(DropdownSettings.Nested) do
 							if nestedSetting.Name == option then
-								-- Create nested dropdown
-								local NestedDropdown = Elements.Template.Dropdown:Clone()
-								NestedDropdown.Name = nestedSetting.Name
-								NestedDropdown.Title.Text = nestedSetting.Name
-								NestedDropdown.Parent = Dropdown.List
-								NestedDropdown.Position = UDim2.new(0, parent.AbsolutePosition.X + parent.AbsoluteSize.X, 0, OptionButton.AbsolutePosition.Y)
-								NestedDropdown.Size = UDim2.new(1, -10, 0, 45)
-								NestedDropdown.Visible = true
-								
-								-- Setup nested options
-								for _, nestedOption in ipairs(nestedSetting.Options) do
-									CreateOptionButton(nestedOption, NestedDropdown.List, false)
+								-- Create or show nested dropdown
+								if not parent:FindFirstChild(option .. "Nested") then
+									local NestedDropdown = Elements.Template.Dropdown:Clone()
+									NestedDropdown.Name = option .. "Nested"
+									NestedDropdown.Title.Text = nestedSetting.Name
+									NestedDropdown.Parent = parent
+									NestedDropdown.Position = UDim2.new(1, 10, 0, OptionButton.Position.Y.Offset)
+									NestedDropdown.Size = UDim2.new(1, -10, 0, 45)
+									NestedDropdown.Visible = true
+									NestedDropdown.List.Visible = true
+
+									-- Create nested options
+									for _, nestedOption in ipairs(nestedSetting.Options) do
+										local NestedButton = CreateOptionButton(nestedOption, NestedDropdown.List, false)
+										NestedButton.MouseButton1Click:Connect(function()
+											local isSelected = table.find(nestedSetting.CurrentOption, nestedOption)
+											if isSelected then
+												table.remove(nestedSetting.CurrentOption, table.find(nestedSetting.CurrentOption, nestedOption))
+												NestedButton.BackgroundColor3 = SelectedTheme.DropdownUnselected
+											else
+												if not nestedSetting.MultipleOptions then
+													table.clear(nestedSetting.CurrentOption)
+													for _, btn in ipairs(NestedDropdown.List:GetChildren()) do
+														if btn:IsA("TextButton") then
+															btn.BackgroundColor3 = SelectedTheme.DropdownUnselected
+														end
+													end
+												end
+												table.insert(nestedSetting.CurrentOption, nestedOption)
+												NestedButton.BackgroundColor3 = SelectedTheme.DropdownSelected
+											end
+											
+											if nestedSetting.Callback then
+												nestedSetting.Callback(nestedSetting.CurrentOption)
+											end
+										end)
+									end
+								else
+									local existingNested = parent:FindFirstChild(option .. "Nested")
+									existingNested.Visible = not existingNested.Visible
 								end
-								
-								-- Handle nested dropdown visibility
-								NestedDropdown.List.Visible = true
-								break
 							end
 						end
-					end)
-				else
-					-- Regular option button behavior
-					OptionButton.Interact.MouseButton1Click:Connect(function()
-						if table.find(DropdownSettings.CurrentOption, option) then
+					else
+						-- Handle regular option selection
+						local isSelected = table.find(DropdownSettings.CurrentOption, option)
+						if isSelected then
 							table.remove(DropdownSettings.CurrentOption, table.find(DropdownSettings.CurrentOption, option))
+							OptionButton.BackgroundColor3 = SelectedTheme.DropdownUnselected
 						else
 							if not DropdownSettings.MultipleOptions then
 								table.clear(DropdownSettings.CurrentOption)
+								for _, btn in ipairs(parent:GetChildren()) do
+									if btn:IsA("TextButton") then
+										btn.BackgroundColor3 = SelectedTheme.DropdownUnselected
+									end
+								end
 							end
 							table.insert(DropdownSettings.CurrentOption, option)
+							OptionButton.BackgroundColor3 = SelectedTheme.DropdownSelected
 						end
-						
+
 						-- Update selected text
 						if #DropdownSettings.CurrentOption == 0 then
 							Dropdown.Selected.Text = "None"
@@ -2731,41 +2763,41 @@ function RayfieldLibrary:CreateWindow(Settings)
 						else
 							Dropdown.Selected.Text = table.concat(DropdownSettings.CurrentOption, ", ")
 						end
-						
-						-- Call callback
+
 						if DropdownSettings.Callback then
 							DropdownSettings.Callback(DropdownSettings.CurrentOption)
 						end
-					end)
-				end
-				
+					end
+				end)
+
 				return OptionButton
 			end
 
 			-- Create main options
 			for _, option in ipairs(DropdownSettings.Options) do
-				CreateOptionButton(option, Dropdown.List, DropdownSettings.Nested ~= nil)
+				CreateOptionButton(option, Dropdown.List, true)
 			end
 
 			-- Handle main dropdown interaction
 			Dropdown.Interact.MouseButton1Click:Connect(function()
-				if Debounce then return end
-				Debounce = true
-				
 				if Dropdown.List.Visible then
-					-- Close dropdown
+					-- Close dropdown and all nested dropdowns
 					TweenService:Create(Dropdown, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {Size = UDim2.new(1, -10, 0, 45)}):Play()
 					TweenService:Create(Dropdown.Toggle, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {Rotation = 180}):Play()
-					task.wait(0.35)
 					Dropdown.List.Visible = false
+					
+					-- Hide all nested dropdowns
+					for _, child in ipairs(Dropdown.List:GetChildren()) do
+						if child.Name:find("Nested") then
+							child.Visible = false
+						end
+					end
 				else
 					-- Open dropdown
 					Dropdown.List.Visible = true
 					TweenService:Create(Dropdown, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {Size = UDim2.new(1, -10, 0, 180)}):Play()
 					TweenService:Create(Dropdown.Toggle, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {Rotation = 0}):Play()
 				end
-				
-				Debounce = false
 			end)
 
 			return DropdownSettings
