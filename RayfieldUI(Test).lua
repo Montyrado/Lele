@@ -2651,140 +2651,20 @@ function RayfieldLibrary:CreateWindow(Settings)
 			Dropdown.Visible = true
 			Dropdown.Parent = TabPage
 
-			-- Support for nested dropdowns
-			local NestedDropdowns = {}
-			if DropdownSettings.Nested then
-				for _, nestedSetting in ipairs(DropdownSettings.Nested) do
-					local NestedDropdown = Elements.Template.Dropdown:Clone()
-					NestedDropdown.Name = nestedSetting.Name
-					NestedDropdown.Title.Text = nestedSetting.Name
-					NestedDropdown.Visible = false
-					NestedDropdown.Parent = Dropdown.List
-					NestedDropdown.Position = UDim2.new(0, 5, 0, 0)
-					NestedDropdown.Size = UDim2.new(1, -10, 0, 45)
-					
-					-- Setup nested dropdown
-					NestedDropdown.List.Visible = false
-					if nestedSetting.CurrentOption then
-						if type(nestedSetting.CurrentOption) == "string" then
-							nestedSetting.CurrentOption = {nestedSetting.CurrentOption}
-						end
-						if not nestedSetting.MultipleOptions and type(nestedSetting.CurrentOption) == "table" then
-							nestedSetting.CurrentOption = {nestedSetting.CurrentOption[1]}
-						end
-					else
-						nestedSetting.CurrentOption = {}
-					end
-
-					if nestedSetting.MultipleOptions then
-						if nestedSetting.CurrentOption and type(nestedSetting.CurrentOption) == "table" then
-							if #nestedSetting.CurrentOption == 1 then
-								NestedDropdown.Selected.Text = nestedSetting.CurrentOption[1]
-							elseif #nestedSetting.CurrentOption == 0 then
-								NestedDropdown.Selected.Text = "None"
-							else
-								NestedDropdown.Selected.Text = table.concat(nestedSetting.CurrentOption, ", ")
-							end
-						else
-							nestedSetting.CurrentOption = {}
-							NestedDropdown.Selected.Text = "None"
-						end
-					else
-						NestedDropdown.Selected.Text = nestedSetting.CurrentOption[1] or "None"
-					end
-
-					-- Apply styling to nested dropdown
-					NestedDropdown.BackgroundColor3 = SelectedTheme.ElementBackground
-					NestedDropdown.UIStroke.Color = SelectedTheme.ElementStroke
-
-					-- Setup options for nested dropdown
-					for _, Option in ipairs(nestedSetting.Options) do
-						local DropdownOption = Elements.Template.Dropdown.List.Template:Clone()
-						DropdownOption.Name = Option
-						DropdownOption.Title.Text = Option
-						DropdownOption.Parent = NestedDropdown.List
-						DropdownOption.Visible = true
-						
-						DropdownOption.BackgroundTransparency = 1
-						DropdownOption.UIStroke.Transparency = 1
-						DropdownOption.Title.TextTransparency = 1
-
-						DropdownOption.Interact.MouseButton1Click:Connect(function()
-							if not nestedSetting.MultipleOptions and table.find(nestedSetting.CurrentOption, Option) then 
-								return
-							end
-
-							if table.find(nestedSetting.CurrentOption, Option) then
-								table.remove(nestedSetting.CurrentOption, table.find(nestedSetting.CurrentOption, Option))
-								if nestedSetting.MultipleOptions then
-									if #nestedSetting.CurrentOption == 1 then
-										NestedDropdown.Selected.Text = nestedSetting.CurrentOption[1]
-									elseif #nestedSetting.CurrentOption == 0 then
-										NestedDropdown.Selected.Text = "None"
-									else
-										NestedDropdown.Selected.Text = table.concat(nestedSetting.CurrentOption, ", ")
-									end
-								else
-									NestedDropdown.Selected.Text = nestedSetting.CurrentOption[1]
-								end
-							else
-								if not nestedSetting.MultipleOptions then
-									table.clear(nestedSetting.CurrentOption)
-								end
-								table.insert(nestedSetting.CurrentOption, Option)
-								if nestedSetting.MultipleOptions then
-									if #nestedSetting.CurrentOption == 1 then
-										NestedDropdown.Selected.Text = nestedSetting.CurrentOption[1]
-									elseif #nestedSetting.CurrentOption == 0 then
-										NestedDropdown.Selected.Text = "None"
-									else
-										NestedDropdown.Selected.Text = table.concat(nestedSetting.CurrentOption, ", ")
-									end
-								else
-									NestedDropdown.Selected.Text = nestedSetting.CurrentOption[1]
-								end
-							end
-
-							if nestedSetting.Callback then
-								nestedSetting.Callback(nestedSetting.CurrentOption)
-							end
-						end)
-					end
-
-					-- Add to nested dropdowns list
-					table.insert(NestedDropdowns, NestedDropdown)
-				end
-			end
-
 			Dropdown.List.Visible = false
 			if DropdownSettings.CurrentOption then
 				if type(DropdownSettings.CurrentOption) == "string" then
-						DropdownSettings.CurrentOption = {DropdownSettings.CurrentOption}
-					end
-					if not DropdownSettings.MultipleOptions and type(DropdownSettings.CurrentOption) == "table" then
-						DropdownSettings.CurrentOption = {DropdownSettings.CurrentOption[1]}
-					end
+					DropdownSettings.CurrentOption = {DropdownSettings.CurrentOption}
+				end
+				if not DropdownSettings.MultipleOptions and type(DropdownSettings.CurrentOption) == "table" then
+					DropdownSettings.CurrentOption = {DropdownSettings.CurrentOption[1]}
+				end
 			else
 				DropdownSettings.CurrentOption = {}
 			end
 
-			if DropdownSettings.MultipleOptions then
-				if DropdownSettings.CurrentOption and type(DropdownSettings.CurrentOption) == "table" then
-					if #DropdownSettings.CurrentOption == 1 then
-						Dropdown.Selected.Text = DropdownSettings.CurrentOption[1]
-					elseif #DropdownSettings.CurrentOption == 0 then
-						Dropdown.Selected.Text = "None"
-					else
-						Dropdown.Selected.Text = table.concat(DropdownSettings.CurrentOption, ", ")
-					end
-				else
-					DropdownSettings.CurrentOption = {}
-					Dropdown.Selected.Text = "None"
-				end
-			else
-				Dropdown.Selected.Text = DropdownSettings.CurrentOption[1] or "None"
-			end
-
+			-- Setup main dropdown appearance
+			Dropdown.Selected.Text = DropdownSettings.CurrentOption[1] or "None"
 			Dropdown.Toggle.ImageColor3 = SelectedTheme.TextColor
 			TweenService:Create(Dropdown, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {BackgroundColor3 = SelectedTheme.ElementBackground}):Play()
 
@@ -2792,70 +2672,100 @@ function RayfieldLibrary:CreateWindow(Settings)
 			Dropdown.UIStroke.Transparency = 1
 			Dropdown.Title.TextTransparency = 1
 
-			Dropdown.Size = UDim2.new(1, -10, 0, 45)
+			-- Create option buttons for main dropdown
+			local function CreateOptionButton(option, parent, isNested)
+				local OptionButton = Elements.Template.Dropdown.List.Template:Clone()
+				OptionButton.Name = option
+				OptionButton.Title.Text = option
+				OptionButton.Parent = parent
+				OptionButton.Visible = true
+				OptionButton.LayoutOrder = #parent:GetChildren()
+				
+				OptionButton.BackgroundTransparency = 1
+				OptionButton.UIStroke.Transparency = 1
+				OptionButton.Title.TextTransparency = 1
 
-			TweenService:Create(Dropdown, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {BackgroundTransparency = 0}):Play()
-			TweenService:Create(Dropdown.UIStroke, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {Transparency = 0}):Play()
-			TweenService:Create(Dropdown.Title, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {TextTransparency = 0}):Play()	
-
-			for _, ununusedoption in ipairs(Dropdown.List:GetChildren()) do
-				if ununusedoption.ClassName == "Frame" and ununusedoption.Name ~= "Placeholder" then
-					ununusedoption:Destroy()
+				if isNested then
+					-- Create nested dropdown when main option is clicked
+					OptionButton.Interact.MouseButton1Click:Connect(function()
+						-- Find corresponding nested settings
+						for _, nestedSetting in ipairs(DropdownSettings.Nested) do
+							if nestedSetting.Name == option then
+								-- Create nested dropdown
+								local NestedDropdown = Elements.Template.Dropdown:Clone()
+								NestedDropdown.Name = nestedSetting.Name
+								NestedDropdown.Title.Text = nestedSetting.Name
+								NestedDropdown.Parent = Dropdown.List
+								NestedDropdown.Position = UDim2.new(0, parent.AbsolutePosition.X + parent.AbsoluteSize.X, 0, OptionButton.AbsolutePosition.Y)
+								NestedDropdown.Size = UDim2.new(1, -10, 0, 45)
+								NestedDropdown.Visible = true
+								
+								-- Setup nested options
+								for _, nestedOption in ipairs(nestedSetting.Options) do
+									CreateOptionButton(nestedOption, NestedDropdown.List, false)
+								end
+								
+								-- Handle nested dropdown visibility
+								NestedDropdown.List.Visible = true
+								break
+							end
+						end
+					end)
+				else
+					-- Regular option button behavior
+					OptionButton.Interact.MouseButton1Click:Connect(function()
+						if table.find(DropdownSettings.CurrentOption, option) then
+							table.remove(DropdownSettings.CurrentOption, table.find(DropdownSettings.CurrentOption, option))
+						else
+							if not DropdownSettings.MultipleOptions then
+								table.clear(DropdownSettings.CurrentOption)
+							end
+							table.insert(DropdownSettings.CurrentOption, option)
+						end
+						
+						-- Update selected text
+						if #DropdownSettings.CurrentOption == 0 then
+							Dropdown.Selected.Text = "None"
+						elseif #DropdownSettings.CurrentOption == 1 then
+							Dropdown.Selected.Text = DropdownSettings.CurrentOption[1]
+						else
+							Dropdown.Selected.Text = table.concat(DropdownSettings.CurrentOption, ", ")
+						end
+						
+						-- Call callback
+						if DropdownSettings.Callback then
+							DropdownSettings.Callback(DropdownSettings.CurrentOption)
+						end
+					end)
 				end
+				
+				return OptionButton
 			end
 
-			Dropdown.Toggle.Rotation = 180
+			-- Create main options
+			for _, option in ipairs(DropdownSettings.Options) do
+				CreateOptionButton(option, Dropdown.List, DropdownSettings.Nested ~= nil)
+			end
 
+			-- Handle main dropdown interaction
 			Dropdown.Interact.MouseButton1Click:Connect(function()
 				if Debounce then return end
+				Debounce = true
+				
 				if Dropdown.List.Visible then
-					Debounce = true
+					-- Close dropdown
 					TweenService:Create(Dropdown, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {Size = UDim2.new(1, -10, 0, 45)}):Play()
-					for _, DropdownOpt in ipairs(Dropdown.List:GetChildren()) do
-						if DropdownOpt.ClassName == "Frame" and DropdownOpt.Name ~= "Placeholder" then
-							TweenService:Create(DropdownOpt, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), {BackgroundTransparency = 1}):Play()
-							TweenService:Create(DropdownOpt.UIStroke, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), {Transparency = 1}):Play()
-							TweenService:Create(DropdownOpt.Title, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), {TextTransparency = 1}):Play()
-						end
-					end
-					TweenService:Create(Dropdown.List, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), {ScrollBarImageTransparency = 1}):Play()
-					TweenService:Create(Dropdown.Toggle, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {Rotation = 180}):Play()   
+					TweenService:Create(Dropdown.Toggle, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {Rotation = 180}):Play()
 					task.wait(0.35)
 					Dropdown.List.Visible = false
-					-- Hide nested dropdowns
-					for _, nestedDropdown in ipairs(NestedDropdowns) do
-						nestedDropdown.Visible = false
-					end
-					Debounce = false
 				else
-					TweenService:Create(Dropdown, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {Size = UDim2.new(1, -10, 0, 180)}):Play()
+					-- Open dropdown
 					Dropdown.List.Visible = true
-					-- Show nested dropdowns
-					for _, nestedDropdown in ipairs(NestedDropdowns) do
-						nestedDropdown.Visible = true
-					end
-					TweenService:Create(Dropdown.List, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), {ScrollBarImageTransparency = 0.7}):Play()
-					TweenService:Create(Dropdown.Toggle, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {Rotation = 0}):Play()   
-					for _, DropdownOpt in ipairs(Dropdown.List:GetChildren()) do
-						if DropdownOpt.ClassName == "Frame" and DropdownOpt.Name ~= "Placeholder" then
-							if DropdownOpt.Name ~= Dropdown.Selected.Text then
-								TweenService:Create(DropdownOpt.UIStroke, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), {Transparency = 0}):Play()
-							end
-							TweenService:Create(DropdownOpt, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), {BackgroundTransparency = 0}):Play()
-							TweenService:Create(DropdownOpt.Title, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), {TextTransparency = 0}):Play()
-						end
-					end
+					TweenService:Create(Dropdown, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {Size = UDim2.new(1, -10, 0, 180)}):Play()
+					TweenService:Create(Dropdown.Toggle, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {Rotation = 0}):Play()
 				end
-			end)
-
-			Dropdown.MouseEnter:Connect(function()
-				if not Dropdown.List.Visible then
-					TweenService:Create(Dropdown, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), {BackgroundColor3 = SelectedTheme.ElementBackgroundHover}):Play()
-				end
-			end)
-
-			Dropdown.MouseLeave:Connect(function()
-				TweenService:Create(Dropdown, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), {BackgroundColor3 = SelectedTheme.ElementBackground}):Play()
+				
+				Debounce = false
 			end)
 
 			return DropdownSettings
