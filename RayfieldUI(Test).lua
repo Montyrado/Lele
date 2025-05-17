@@ -2653,9 +2653,6 @@ function RayfieldLibrary:CreateWindow(Settings)
 
 			-- Initialize dropdown state
 			Dropdown.List.Visible = false
-			Dropdown.List.Size = UDim2.new(1, 0, 0, 0)
-			Dropdown.List.Position = UDim2.new(0, 0, 0, 45)
-			
 			if type(DropdownSettings.CurrentOption) == "string" then
 				DropdownSettings.CurrentOption = {DropdownSettings.CurrentOption}
 			end
@@ -2672,23 +2669,13 @@ function RayfieldLibrary:CreateWindow(Settings)
 
 			-- Function to create option buttons
 			local function CreateOptionButton(option, parent, isMainOption)
-				local OptionButton = Instance.new("TextButton")
+				local OptionButton = Elements.Template.Dropdown.List.Template:Clone()
 				OptionButton.Name = option
-				OptionButton.Text = option
-				OptionButton.Size = UDim2.new(1, -10, 0, 30)
-				OptionButton.Position = UDim2.new(0, 5, 0, (#parent:GetChildren() * 35))
-				OptionButton.BackgroundColor3 = table.find(DropdownSettings.CurrentOption, option) and SelectedTheme.DropdownSelected or SelectedTheme.DropdownUnselected
-				OptionButton.TextColor3 = SelectedTheme.TextColor
-				OptionButton.TextSize = 14
-				OptionButton.Font = Enum.Font.GothamBold
+				OptionButton.Title.Text = option
 				OptionButton.Parent = parent
 				OptionButton.Visible = true
-				OptionButton.AutoButtonColor = false
-				
-				-- Add corner rounding
-				local UICorner = Instance.new("UICorner")
-				UICorner.CornerRadius = UDim.new(0, 6)
-				UICorner.Parent = OptionButton
+				OptionButton.BackgroundColor3 = table.find(DropdownSettings.CurrentOption, option) and SelectedTheme.DropdownSelected or SelectedTheme.DropdownUnselected
+				OptionButton.Title.TextColor3 = SelectedTheme.TextColor
 
 				-- Handle option selection
 				OptionButton.MouseButton1Click:Connect(function()
@@ -2701,37 +2688,25 @@ function RayfieldLibrary:CreateWindow(Settings)
 								local existingNested = parent:FindFirstChild(nestedName)
 								
 								if not existingNested then
-									local NestedContainer = Instance.new("Frame")
-									NestedContainer.Name = nestedName
-									NestedContainer.Size = UDim2.new(1, -20, 0, (#nestedSetting.Options * 35) + 10)
-									NestedContainer.Position = UDim2.new(1, 5, 0, OptionButton.Position.Y.Offset)
-									NestedContainer.BackgroundColor3 = SelectedTheme.ElementBackground
-									NestedContainer.BorderSizePixel = 0
-									NestedContainer.Parent = parent
-									
-									-- Add corner rounding to nested container
-									local UICorner = Instance.new("UICorner")
-									UICorner.CornerRadius = UDim.new(0, 6)
-									UICorner.Parent = NestedContainer
+									local NestedDropdown = Elements.Template.Dropdown:Clone()
+									NestedDropdown.Name = nestedName
+									NestedDropdown.Title.Text = nestedSetting.Name
+									NestedDropdown.Parent = parent
+									NestedDropdown.Position = UDim2.new(1, 10, 0, OptionButton.Position.Y.Offset)
+									NestedDropdown.Size = UDim2.new(1, -10, 0, 45)
+									NestedDropdown.Visible = true
+									NestedDropdown.List.Visible = true
+									NestedDropdown.BackgroundColor3 = SelectedTheme.ElementBackground
 
 									-- Create nested options
-									for i, nestedOption in ipairs(nestedSetting.Options) do
-										local NestedButton = Instance.new("TextButton")
+									for _, nestedOption in ipairs(nestedSetting.Options) do
+										local NestedButton = Elements.Template.Dropdown.List.Template:Clone()
 										NestedButton.Name = nestedOption
-										NestedButton.Text = nestedOption
-										NestedButton.Size = UDim2.new(1, -10, 0, 30)
-										NestedButton.Position = UDim2.new(0, 5, 0, ((i-1) * 35) + 5)
+										NestedButton.Title.Text = nestedOption
+										NestedButton.Parent = NestedDropdown.List
+										NestedButton.Visible = true
 										NestedButton.BackgroundColor3 = table.find(nestedSetting.CurrentOption, nestedOption) and SelectedTheme.DropdownSelected or SelectedTheme.DropdownUnselected
-										NestedButton.TextColor3 = SelectedTheme.TextColor
-										NestedButton.TextSize = 14
-										NestedButton.Font = Enum.Font.GothamBold
-										NestedButton.Parent = NestedContainer
-										NestedButton.AutoButtonColor = false
-										
-										-- Add corner rounding to nested button
-										local UICorner = Instance.new("UICorner")
-										UICorner.CornerRadius = UDim.new(0, 6)
-										UICorner.Parent = NestedButton
+										NestedButton.Title.TextColor3 = SelectedTheme.TextColor
 
 										NestedButton.MouseButton1Click:Connect(function()
 											local isSelected = table.find(nestedSetting.CurrentOption, nestedOption)
@@ -2741,7 +2716,7 @@ function RayfieldLibrary:CreateWindow(Settings)
 											else
 												if not nestedSetting.MultipleOptions then
 													table.clear(nestedSetting.CurrentOption)
-													for _, btn in ipairs(NestedContainer:GetChildren()) do
+													for _, btn in ipairs(NestedDropdown.List:GetChildren()) do
 														if btn:IsA("TextButton") then
 															btn.BackgroundColor3 = SelectedTheme.DropdownUnselected
 														end
@@ -2798,20 +2773,8 @@ function RayfieldLibrary:CreateWindow(Settings)
 				return OptionButton
 			end
 
-			-- Create list container
-			local ListContainer = Instance.new("Frame")
-			ListContainer.Name = "ListContainer"
-			ListContainer.Size = UDim2.new(1, 0, 0, 0)
-			ListContainer.Position = UDim2.new(0, 0, 1, 0)
-			ListContainer.BackgroundTransparency = 1
-			ListContainer.ClipsDescendants = true
-			ListContainer.Parent = Dropdown
-
 			-- Create main options
 			for _, option in ipairs(DropdownSettings.Options) do
-				CreateOptionButton(option, ListContainer, true)
-			end
-
 				CreateOptionButton(option, Dropdown.List, true)
 			end
 
